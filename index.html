@@ -4,16 +4,18 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Pterodactyl Tracker</title>
-<meta name="description" content="Every known pterosaur fossil find on one map: where they were found, where they lived 228 to 66 million years ago, and the latest discoveries.">
+<meta name="description" content="Strange, unexplained photos and videos people have caught on camera: pterodactyl sightings, UFOs, cryptids, ghosts and lights in the sky.">
+<meta name="referrer" content="no-referrer">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
 :root{--bg:#f6f3ec;--surface:#fffdf8;--ink:#1f1b16;--muted:#6d655a;--line:#e4ddcf;--soft:#efe9dd;--accent:#b5541f;
-  --tri:#8e44ad;--jur:#1f8a70;--cre:#d9822b;--ocean:#cfe0e8;
+  --ptero:#b5541f;--ufo:#2e7d6b;--cryptid:#6b4f2a;--ghost:#5b5f97;--sky:#2f6fa8;--strange:#8a3b6b;
   --f-display:"Fraunces",Georgia,serif;--f-body:"Inter",system-ui,sans-serif;--f-mono:"JetBrains Mono",ui-monospace,monospace}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#13110e;--surface:#1c1914;--ink:#efe8dc;--muted:#a89e8f;--line:#332d25;--soft:#26211b;--accent:#f0915a;
-  --tri:#c39bd3;--jur:#4fd1a5;--cre:#f5b041;--ocean:#152630}}
+  --ptero:#f0915a;--ufo:#4fd1a5;--cryptid:#d4a86a;--ghost:#a5a9e8;--sky:#7fb8e8;--strange:#e08abf}}
+:root[data-theme="dark"]{--bg:#13110e;--surface:#1c1914;--ink:#efe8dc;--muted:#a89e8f;--line:#332d25;--soft:#26211b;--accent:#f0915a;
+  --ptero:#f0915a;--ufo:#4fd1a5;--cryptid:#d4a86a;--ghost:#a5a9e8;--sky:#7fb8e8;--strange:#e08abf}
 *{box-sizing:border-box}
 html,body{margin:0}
 body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body)}
@@ -22,214 +24,128 @@ button{font:inherit;color:inherit}
 header{max-width:1400px;margin:0 auto;padding:22px 16px 8px;display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
 h1{font:700 clamp(1.8rem,4.5vw,2.6rem)/1.05 var(--f-display);margin:0;letter-spacing:-.01em}
 h1 span{color:var(--accent)}
-.tag{color:var(--muted);margin-top:6px}
-.tag b{color:var(--ink);font-weight:600}
+.tag{color:var(--muted);margin-top:6px;max-width:60ch}
 .stats{display:flex;gap:8px;flex-wrap:wrap}
 .stat{padding:6px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);font-size:.85rem;color:var(--muted)}
 .stat b{font-family:var(--f-mono);color:var(--ink);font-size:1.05rem;margin-right:4px}
-.controls{max-width:1400px;margin:0 auto;padding:10px 16px;display:flex;flex-direction:column;gap:10px}
-.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.controls{max-width:1400px;margin:0 auto;padding:10px 16px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .chip{border:1px solid var(--line);background:var(--surface);padding:5px 12px;border-radius:999px;font-size:.86rem;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
 .chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip small{font-family:var(--f-mono);opacity:.7}
 .sw{width:10px;height:10px;border-radius:50%}
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;background:var(--surface)}
 .seg button{border:0;background:none;padding:5px 14px;font-size:.86rem;cursor:pointer}
 .seg button[aria-pressed="true"]{background:var(--accent);color:#fff}
-input[type=search]{font:inherit;font-size:.9rem;padding:6px 12px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink);min-width:0;flex:1;max-width:340px}
-.time{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 14px}
-.time label{font-size:.86rem;color:var(--muted)}
-.time input[type=range]{flex:1;min-width:180px;accent-color:var(--accent)}
-.time output{font-family:var(--f-mono);font-size:.95rem;min-width:200px}
-.layout{max-width:1400px;margin:0 auto;padding:6px 16px 16px;display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px}
-#map{height:min(72vh,720px);min-height:380px;border-radius:12px;border:1px solid var(--line);background:var(--soft)}
-#map.paleo{background:var(--ocean)}
-.leaflet-container{font:inherit}
-.leaflet-popup-content{margin:10px 12px;font-size:.86rem;line-height:1.4}
-.leaflet-popup-content b{font-family:var(--f-display);font-size:1rem}
-.note{font-size:.82rem;color:var(--muted);margin:8px 2px 0}
-aside{display:flex;flex-direction:column;gap:14px;min-width:0}
-.box{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;min-width:0}
+input[type=search]{font:inherit;font-size:.9rem;padding:6px 12px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink);min-width:0;flex:1 1 180px;max-width:340px}
+.layout{max-width:1400px;margin:0 auto;padding:6px 16px 32px;display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;align-content:start}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;cursor:pointer;text-align:left;padding:0}
+.card:hover{border-color:var(--accent)}
+.card:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.thumb{position:relative;aspect-ratio:4/3;background:var(--soft)}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.play{position:absolute;inset:auto auto 8px 8px;background:rgba(0,0,0,.65);color:#fff;font-size:.75rem;padding:2px 8px;border-radius:999px}
+.cat{position:absolute;top:8px;left:8px;color:#fff;font-size:.72rem;font-weight:600;padding:2px 8px;border-radius:999px}
+.body{padding:10px 12px 12px;display:flex;flex-direction:column;gap:4px;flex:1}
+.body h3{font-size:.92rem;font-weight:600;margin:0;line-height:1.35;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.meta{font-size:.78rem;color:var(--muted);margin-top:auto}
+.empty{color:var(--muted);padding:40px 0;text-align:center;grid-column:1/-1}
+.more{grid-column:1/-1;justify-self:center}
+.btn{border:1px solid var(--accent);background:var(--accent);color:#fff;padding:8px 18px;border-radius:8px;font-weight:600;cursor:pointer}
+aside{min-width:0}
+.box{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;position:sticky;top:12px}
 .box h2{font:600 1.05rem var(--f-display);margin:0 0 8px}
-.bars{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px}
-.bars li{display:grid;grid-template-columns:minmax(0,1fr) 34px;gap:8px;align-items:center;font-size:.86rem;cursor:pointer;border-radius:6px;padding:2px 4px}
-.bars li:hover{background:var(--soft)}
-.bars .lbl{position:relative;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;padding:2px 6px;border-radius:4px}
-.bars .lbl i{position:absolute;inset:0 auto 0 0;background:color-mix(in srgb,var(--accent) 22%,transparent);border-radius:4px;z-index:0}
-.bars .lbl span{position:relative}
-.bars .n{font-family:var(--f-mono);font-size:.8rem;color:var(--muted);text-align:right}
-.btn{border:1px solid var(--accent);background:var(--accent);color:#fff;padding:8px 14px;border-radius:8px;font-weight:600;cursor:pointer;width:100%}
-#near{font-size:.88rem;margin-top:10px}
-.news{max-width:1400px;margin:0 auto;padding:0 16px 30px}
-.news ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),1fr));gap:12px}
-.news li{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
-.news a{text-decoration:none;font-weight:600}
+.news{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;max-height:75vh;overflow:auto}
+.news a{text-decoration:none;font-size:.88rem;font-weight:500;line-height:1.35}
 .news a:hover{text-decoration:underline}
-.src{color:var(--muted);font-size:.8rem}
-.legend{display:flex;gap:12px;font-size:.8rem;color:var(--muted);flex-wrap:wrap}
-footer{max-width:1400px;margin:0 auto;padding:0 16px 40px;color:var(--muted);font-size:.8rem}
-@media (max-width:900px){.layout{grid-template-columns:minmax(0,1fr)} #map{height:60vh} .time output{min-width:0}}
+.news div{font-size:.76rem;color:var(--muted)}
+footer{max-width:1400px;margin:0 auto;padding:0 16px 32px;color:var(--muted);font-size:.8rem}
+dialog{border:0;padding:0;background:transparent;max-width:min(96vw,1100px);width:100%}
+dialog::backdrop{background:rgba(0,0,0,.85)}
+.lb{background:var(--surface);border-radius:12px;overflow:hidden}
+.lb .media{background:#000;display:flex;justify-content:center}
+.lb img{max-width:100%;max-height:75vh;display:block}
+.lb iframe{width:100%;aspect-ratio:16/9;border:0;display:block}
+.lb .cap{padding:12px 16px;display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
+.lb .cap a{color:var(--accent);font-weight:600}
+.lb .x{border:1px solid var(--line);background:none;border-radius:8px;padding:4px 12px;cursor:pointer}
+@media (max-width:900px){.layout{grid-template-columns:1fr}.box{position:static}.news{max-height:none}}
 </style>
 </head>
 <body>
 <header>
-  <div><h1>Pterodactyl <span>Tracker</span></h1>
-  <div class="tag">Last confirmed sighting: <b>about 66 million years ago</b>. Every pterosaur fossil ever recorded, mapped.</div></div>
+  <div>
+    <h1>Pterodactyl <span>Tracker</span></h1>
+    <div class="tag">Strange, unexplained photos and videos people have caught on camera: pterodactyl sightings, UFOs, cryptids, ghosts and lights in the sky. Collected from Reddit, unverified, and updated every few hours.</div>
+  </div>
   <div class="stats" id="stats"></div>
 </header>
-
 <div class="controls">
-  <div class="row">
-    <div class="seg" role="group" aria-label="Map mode"><button aria-pressed="true" data-mode="today">Where they were found</button><button aria-pressed="false" data-mode="paleo">Where they lived</button></div>
-    <button class="chip" aria-pressed="true" data-p="Triassic"><span class="sw" style="background:var(--tri)"></span>Triassic</button>
-    <button class="chip" aria-pressed="true" data-p="Jurassic"><span class="sw" style="background:var(--jur)"></span>Jurassic</button>
-    <button class="chip" aria-pressed="true" data-p="Cretaceous"><span class="sw" style="background:var(--cre)"></span>Cretaceous</button>
-    <button class="chip" aria-pressed="false" id="ptero" title="The actual pterodactyl: genus Pterodactylus">Only <i>Pterodactylus</i></button>
-    <input type="search" id="q" placeholder="Search genus, species, family, place…" aria-label="Search fossils">
+  <div id="cats" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+  <div class="seg" id="kind" role="group" aria-label="Media type">
+    <button data-k="all" aria-pressed="true">All</button><button data-k="image" aria-pressed="false">Photos</button><button data-k="video" aria-pressed="false">Videos</button>
   </div>
-  <div class="time">
-    <label><input type="checkbox" id="timeOn"> Travel in time</label>
-    <input type="range" id="t" min="66" max="230" step="1" value="150" disabled aria-label="Millions of years ago">
-    <output id="tout">Showing all 164 million years</output>
+  <div class="seg" id="sort" role="group" aria-label="Sort">
+    <button data-s="new" aria-pressed="true">Newest</button><button data-s="top" aria-pressed="false">Most liked</button>
   </div>
+  <input type="search" id="q" placeholder="Search sightings…" aria-label="Search">
 </div>
-
 <div class="layout">
-  <section><div id="map" role="region" aria-label="Map of pterosaur fossil finds"></div>
-    <div class="legend" style="margin-top:8px"><span><span class="sw" style="display:inline-block;background:var(--tri)"></span> Triassic, 252 to 201 Ma</span><span><span class="sw" style="display:inline-block;background:var(--jur)"></span> Jurassic, 201 to 145 Ma</span><span><span class="sw" style="display:inline-block;background:var(--cre)"></span> Cretaceous, 145 to 66 Ma</span><span id="shown"></span></div>
-    <p class="note" id="modeNote"></p></section>
-  <aside>
-    <div class="box"><h2>Nearest pterosaur to you</h2><p class="src" style="margin:0 0 10px">Uses your location in this browser only. It's never sent anywhere.</p><button class="btn" id="locate">Find the closest fossil</button><div id="near"></div></div>
-    <div class="box"><h2>Most-found genera</h2><ul class="bars" id="genera"></ul></div>
-    <div class="box"><h2>Top countries</h2><ul class="bars" id="countries"></ul></div>
-  </aside>
+  <main class="grid" id="grid"><div class="empty">Loading sightings…</div></main>
+  <aside><div class="box"><h2>In the news</h2><ul class="news" id="news"></ul></div></aside>
 </div>
-
-<section class="news"><h2 style="font:600 1.25rem var(--f-display);margin:0 0 10px">Latest pterosaur science</h2><ul id="news"></ul></section>
-<footer>Fossil data: <a href="https://paleobiodb.org/">The Paleobiology Database</a> (CC BY 4.0). "Where they lived" positions are PBDB's GPlates reconstructions of each site at the time of the fossil. Pterodactyl is the popular name for pterosaurs; <i>Pterodactylus</i> is one genus of them, and none are dinosaurs. News comes from science outlets via Google News, Bing News, ScienceDaily and Phys.org, with satire, viral-video and "sighting" stories excluded. Updated daily. <span id="upd"></span></footer>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<footer id="foot"></footer>
+<dialog id="lb"><div class="lb"><div class="media" id="lbm"></div><div class="cap"><div id="lbc"></div><div><a id="lbl" target="_blank" rel="noopener">Open original</a> &nbsp; <button class="x" id="lbx">Close</button></div></div></div></dialog>
 <script>
-(function(){
-"use strict";
-var D=null, map, tiles, layer, mode="today", userMarker=null;
-var F={periods:{Triassic:true,Jurassic:true,Cretaceous:true},ptero:false,q:"",timeOn:false,t:150,genus:"",cc:""};
-var COLOR={};
-function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim()}
-function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
-function safeUrl(u){return /^https?:\/\//i.test(u||"")?u:"#"}
-var dn=null;try{dn=new Intl.DisplayNames(["en"],{type:"region"})}catch(e){}
-function country(cc){var c=cc==="UK"?"GB":cc;try{return dn?dn.of(c):cc}catch(e){return cc}}
-function ma(x){return x==null?"?":(Math.round(x*10)/10)+" Ma"}
-function ago(iso){if(!iso)return"";var d=Math.round((Date.now()-new Date(iso))/864e5);return d<1?"today":d===1?"yesterday":d+" days ago"}
-
-function init(){
-  COLOR={Triassic:css("--tri"),Jurassic:css("--jur"),Cretaceous:css("--cre")};
-  map=L.map("map",{preferCanvas:true,worldCopyJump:true,minZoom:1}).setView([25,10],2);
-  tiles=L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:12,attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors · Fossils: <a href="https://paleobiodb.org/">PBDB</a>'}).addTo(map);
-  layer=L.layerGroup().addTo(map);
-  if(window.matchMedia("(prefers-color-scheme: dark)").matches){var st=document.createElement("style");st.textContent=".leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.85) contrast(.9)}";document.head.appendChild(st)}
+const CATS={pterodactyl:["Pterodactyl sightings","--ptero"],ufo:["UFOs & UAPs","--ufo"],cryptid:["Cryptids","--cryptid"],
+  ghost:["Ghosts","--ghost"],sky:["Sky phenomena","--sky"],strange:["Just strange","--strange"]};
+const st={cat:null,kind:"all",sort:"new",q:"",shown:60};let D={items:[],news:[]};
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const ago=d=>{const s=(Date.now()-new Date(d))/1e3;return s<3600?Math.max(1,s/60|0)+"m ago":s<86400?(s/3600|0)+"h ago":s<2592e3?(s/86400|0)+"d ago":new Date(d).toLocaleDateString()};
+function filtered(){
+  const q=st.q.toLowerCase();
+  let xs=D.items.filter(i=>(!st.cat||i.cat===st.cat)&&(st.kind==="all"||i.kind===st.kind)&&(!q||(i.title+" "+i.text+" "+i.src).toLowerCase().includes(q)));
+  return st.sort==="top"?xs.sort((a,b)=>b.score-a.score||b.date.localeCompare(a.date)):xs;
 }
-
-function match(f){
-  if(!F.periods[f.period])return false;
-  if(F.ptero&&f.genus!=="Pterodactylus")return false;
-  if(F.genus&&f.genus!==F.genus)return false;
-  if(F.cc&&f.cc!==F.cc)return false;
-  if(F.timeOn&&!(f.max>=F.t&&f.min<=F.t))return false;
-  if(F.q){var hay=(f.name+" "+f.genus+" "+f.family+" "+f.state+" "+f.where+" "+country(f.cc)+" "+f.interval).toLowerCase();if(hay.indexOf(F.q)<0)return false}
-  return true;
+function render(){
+  const xs=filtered(),g=$("grid");
+  if(!xs.length){g.innerHTML='<div class="empty">Nothing strange matches. Yet.</div>';return}
+  g.innerHTML=xs.slice(0,st.shown).map((i,n)=>{const [lab,col]=CATS[i.cat]||CATS.strange;
+    return `<button class="card" data-n="${n}"><div class="thumb"><img loading="lazy" referrerpolicy="no-referrer" src="${esc(i.thumb)}" alt="" onerror="this.style.visibility='hidden'">
+    <span class="cat" style="background:var(${col})">${lab}</span>${i.kind==="video"?'<span class="play">▶ video</span>':""}</div>
+    <div class="body"><h3>${esc(i.title)}</h3><div class="meta">${esc(i.src)} · ${ago(i.date)}</div></div></button>`}).join("")+
+    (xs.length>st.shown?`<div class="more"><button class="btn" id="more">Show more (${xs.length-st.shown})</button></div>`:"");
+  g.querySelectorAll(".card").forEach(c=>c.onclick=()=>open_(xs[+c.dataset.n]));
+  const m=$("more");if(m)m.onclick=()=>{st.shown+=60;render()};
 }
-
-function popup(f){
-  return '<b>'+esc(f.name)+'</b>'+(f.family?'<br><span class="src">'+esc(f.family)+'</span>':"")+
-    '<br>'+esc(f.interval)+' · '+esc(ma(f.max))+' to '+esc(ma(f.min))+' ('+esc(f.period)+')'+
-    '<br>Found in '+esc([f.state,country(f.cc)].filter(Boolean).join(", "))+(f.where?'<br><span class="src">'+esc(f.where)+'</span>':"")+
-    (f.ref?'<br><span class="src" style="display:block;margin-top:4px">'+esc(f.ref)+'</span>':"")+
-    '<br><a href="https://paleobiodb.org/classic/basicCollectionSearch?collection_no='+encodeURIComponent(f.coll)+'" target="_blank" rel="noopener">PBDB record</a>';
+function open_(i){
+  const isImg=i.kind==="image"&&/\.(jpe?g|png|webp)(\?|$)|cdn\.bsky\.app|i\.redd\.it|i\.imgur\.com/i.test(i.media);
+  if(!i.yt&&!isImg){window.open(i.url,"_blank","noopener");return}
+  $("lbm").innerHTML=i.yt?`<iframe src="https://www.youtube-nocookie.com/embed/${esc(i.yt)}?autoplay=1" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>`
+    :`<img referrerpolicy="no-referrer" src="${esc(i.media)}" alt="${esc(i.title)}">`;
+  $("lbc").textContent=`${i.title} (${i.src})`;$("lbl").href=i.url;$("lb").showModal();
 }
-
-function draw(){
-  layer.clearLayers();
-  var list=D.finds.filter(match), n=0;
-  list.forEach(function(f){
-    var ll=mode==="paleo"?[f.plat,f.plng]:[f.lat,f.lng];
-    if(ll[0]==null||ll[1]==null)return;
-    n++;
-    L.circleMarker(ll,{radius:f.genus==="Pterodactylus"?7:5,color:"#000",weight:.6,opacity:.6,fillColor:COLOR[f.period]||"#888",fillOpacity:.85})
-      .bindPopup(popup(f),{maxWidth:300}).addTo(layer);
-  });
-  document.getElementById("shown").textContent=n+" of "+D.finds.length+" finds shown"+(F.genus?" · "+F.genus:"")+(F.cc?" · "+country(F.cc):"");
-  sidebars(list);
+$("lbx").onclick=()=>$("lb").close();
+$("lb").addEventListener("close",()=>$("lbm").innerHTML="");
+$("lb").onclick=e=>{if(e.target===$("lb"))$("lb").close()};
+function chips(){
+  const n={};D.items.forEach(i=>n[i.cat]=(n[i.cat]||0)+1);
+  $("cats").innerHTML=[`<button class="chip" data-c="" aria-pressed="${!st.cat}">Everything <small>${D.items.length}</small></button>`]
+    .concat(Object.entries(CATS).filter(([c])=>n[c]).map(([c,[lab,col]])=>`<button class="chip" data-c="${c}" aria-pressed="${st.cat===c}"><i class="sw" style="background:var(${col})"></i>${lab} <small>${n[c]}</small></button>`)).join("");
+  $("cats").querySelectorAll(".chip").forEach(b=>b.onclick=()=>{st.cat=b.dataset.c||null;st.shown=60;chips();render()});
 }
-
-function bars(el,counts,key,label,onpick,active){
-  var arr=Object.keys(counts).map(function(k){return[k,counts[k]]}).sort(function(a,b){return b[1]-a[1]}).slice(0,10), top=arr.length?arr[0][1]:1;
-  el.innerHTML=arr.length?arr.map(function(a){return '<li data-k="'+esc(a[0])+'" title="'+(active===a[0]?"Click to clear":"Click to filter")+'"><span class="lbl"><i style="width:'+(a[1]/top*100)+'%"></i><span>'+(active===a[0]?"✓ ":"")+esc(label(a[0]))+'</span></span><span class="n">'+a[1]+'</span></li>'}).join(""):'<li class="src">None</li>';
-  el.querySelectorAll("li[data-k]").forEach(function(li){li.onclick=function(){onpick(li.dataset.k)}});
-}
-function sidebars(list){
-  var g={},c={};list.forEach(function(f){if(f.genus)g[f.genus]=(g[f.genus]||0)+1;if(f.cc)c[f.cc]=(c[f.cc]||0)+1});
-  bars(document.getElementById("genera"),g,"genus",function(k){return k},function(k){F.genus=F.genus===k?"":k;draw()},F.genus);
-  bars(document.getElementById("countries"),c,"cc",country,function(k){F.cc=F.cc===k?"":k;draw()},F.cc);
-}
-
-function setMode(m){
-  mode=m;
-  document.querySelectorAll("[data-mode]").forEach(function(b){b.setAttribute("aria-pressed",b.dataset.mode===m)});
-  var el=document.getElementById("map");
-  if(m==="paleo"){map.removeLayer(tiles);el.classList.add("paleo");
-    document.getElementById("modeNote").textContent="Each dot sits where its fossil site was when the animal lived, reconstructed by plate tectonics. The continents have since moved, so there's no modern map underneath. Use the time slider to watch the sites spread across the ancient world.";}
-  else{tiles.addTo(map);el.classList.remove("paleo");document.getElementById("modeNote").textContent="Each dot is a fossil find at its present-day location. Click a dot for the species, age and published source.";}
-  draw();
-}
-
-function timeLabel(){
-  var o=document.getElementById("tout");
-  if(!F.timeOn){o.textContent="Showing every find from 228 to 66 million years ago";return}
-  var p=F.t>201.4?"Triassic":F.t>145?"Jurassic":"Cretaceous";
-  o.textContent=F.t+" million years ago · "+p;
-}
-
-function nearest(){
-  var out=document.getElementById("near");
-  if(!navigator.geolocation){out.textContent="Your browser can't share a location.";return}
-  out.textContent="Finding you…";
-  navigator.geolocation.getCurrentPosition(function(pos){
-    var la=pos.coords.latitude, lo=pos.coords.longitude, R=6371, best=null, bd=1e9;
-    D.finds.forEach(function(f){var p1=la*Math.PI/180,p2=f.lat*Math.PI/180,dp=p2-p1,dl=(f.lng-lo)*Math.PI/180;
-      var a=Math.sin(dp/2)*Math.sin(dp/2)+Math.cos(p1)*Math.cos(p2)*Math.sin(dl/2)*Math.sin(dl/2), d=2*R*Math.asin(Math.sqrt(a));
-      if(d<bd){bd=d;best=f}});
-    if(!best){out.textContent="No finds to compare.";return}
-    if(mode!=="today")setMode("today");
-    var mi=Math.round(bd*0.621371);
-    out.innerHTML='<b>'+esc(best.name)+'</b>, '+mi.toLocaleString()+' miles away in '+esc([best.state,country(best.cc)].filter(Boolean).join(", "))+'.<div class="src">'+esc(best.interval)+', about '+esc(ma((best.max+best.min)/2))+'.</div>';
-    if(userMarker)map.removeLayer(userMarker);
-    userMarker=L.circleMarker([la,lo],{radius:8,color:css("--accent"),weight:3,fillOpacity:0}).addTo(map).bindTooltip("You");
-    map.fitBounds([[la,lo],[best.lat,best.lng]],{padding:[40,40],maxZoom:8});
-  },function(){out.textContent="Location permission was declined."},{timeout:15000,maximumAge:600000});
-}
-
-function news(){
-  document.getElementById("news").innerHTML=D.news.length?D.news.slice(0,12).map(function(n){return '<li><a href="'+esc(safeUrl(n.url))+'" target="_blank" rel="noopener">'+esc(n.title)+'</a><div class="src">'+esc(n.src)+(n.date?' · '+esc(ago(n.date)):"")+'</div></li>'}).join(""):'<li class="src">No new pterosaur research in the news in the last few months.</li>';
-}
-
-document.querySelectorAll("[data-mode]").forEach(function(b){b.onclick=function(){setMode(b.dataset.mode)}});
-document.querySelectorAll("[data-p]").forEach(function(b){b.onclick=function(){F.periods[b.dataset.p]=!F.periods[b.dataset.p];b.setAttribute("aria-pressed",F.periods[b.dataset.p]);draw()}});
-document.getElementById("ptero").onclick=function(){F.ptero=!F.ptero;this.setAttribute("aria-pressed",F.ptero);draw()};
-document.getElementById("q").oninput=function(e){F.q=e.target.value.trim().toLowerCase();draw()};
-document.getElementById("timeOn").onchange=function(e){F.timeOn=e.target.checked;document.getElementById("t").disabled=!F.timeOn;timeLabel();draw()};
-document.getElementById("t").oninput=function(e){F.t=+e.target.value;timeLabel();draw()};
-document.getElementById("locate").onclick=nearest;
-
-init();timeLabel();
-fetch("data.json",{cache:"no-cache"}).then(function(r){return r.json()}).then(function(d){
-  D=d;
-  var genera={},cc={};d.finds.forEach(function(f){if(f.genus)genera[f.genus]=1;cc[f.cc]=1});
-  document.getElementById("stats").innerHTML='<span class="stat"><b>'+d.finds.length.toLocaleString()+'</b>fossil finds</span><span class="stat"><b>'+Object.keys(genera).length+'</b>genera</span><span class="stat"><b>'+Object.keys(cc).length+'</b>countries</span>';
-  document.getElementById("upd").textContent="Last updated "+new Date(d.updated).toLocaleDateString()+".";
-  setMode("today");news();
-}).catch(function(){document.getElementById("shown").textContent="Couldn't load fossil data."});
-})();
+function seg(id,key,attr){$(id).querySelectorAll("button").forEach(b=>b.onclick=()=>{st[key]=b.dataset[attr];st.shown=60;
+  $(id).querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===b));render()})}
+seg("kind","kind","k");seg("sort","sort","s");
+$("q").oninput=e=>{st.q=e.target.value;st.shown=60;render()};
+fetch("data.json").then(r=>r.json()).then(d=>{D=d;
+  const v=d.items.filter(i=>i.kind==="video").length,p=d.items.filter(i=>i.cat==="pterodactyl").length;
+  $("stats").innerHTML=`<div class="stat"><b>${d.items.length}</b>sightings</div><div class="stat"><b>${v}</b>videos</div><div class="stat"><b>${p}</b>pterodactyls</div>`;
+  $("news").innerHTML=d.news.map(n=>`<li><a href="${esc(n.url)}" target="_blank" rel="noopener">${esc(n.title)}</a><div>${esc(n.src)} · ${ago(n.date)}</div></li>`).join("")||"<li>No headlines right now.</li>";
+  $("foot").textContent=`Updated ${new Date(d.updated).toLocaleString()}. Posts belong to the people who shared them; every card links to the original. Nothing here is verified.`;
+  chips();render();
+}).catch(()=>$("grid").innerHTML='<div class="empty">Could not load sightings.</div>');
 </script>
 </body>
 </html>

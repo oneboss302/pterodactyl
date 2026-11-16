@@ -1,12 +1,12 @@
-name: Update fossils and news
+name: Update sightings
 
 on:
   schedule:
-    - cron: "17 11 * * *"   # daily
+    - cron: "17 */3 * * *"   # every 3 hours; Reddit rate-limits anything faster
   workflow_dispatch:
   push:
     branches: [main]
-    paths-ignore: [snapshot.txt]
+    paths-ignore: [items.json]
 
 permissions:
   contents: write
@@ -32,15 +32,15 @@ jobs:
           cp index.html _site/
           echo "pterodactyl.castafero.com" > _site/CNAME
           touch _site/.nojekyll
-      - name: Record changes (keeps a history and keeps the schedule active)
+      - name: Save the archive (keeps sightings when a source blocks us, and keeps the schedule active)
         run: |
-          python3 -c "import json;d=json.load(open('_site/data.json'));print(len(d['finds']),'finds');[print(n['title']) for n in d['news']]" > snapshot.txt
-          git add snapshot.txt
+          git add items.json
           git diff --cached --quiet && exit 0
           git config user.name "pterodactyl-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -q -m "Fossil/news update $(date -u +%F)"
+          git commit -q -m "Sightings update $(date -u +'%F %H:%M UTC')"
           for i in 1 2 3; do git pull --rebase -X theirs -q && git push -q && exit 0; sleep 5; done
+          echo "::warning::archive not pushed; deploying anyway"
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
