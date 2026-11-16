@@ -1,0 +1,49 @@
+name: Update fossils and news
+
+on:
+  schedule:
+    - cron: "17 11 * * *"   # daily
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths-ignore: [snapshot.txt]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pterodactyl
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Build
+        run: |
+          python3 build.py _site
+          cp index.html _site/
+          echo "pterodactyl.castafero.com" > _site/CNAME
+          touch _site/.nojekyll
+      - name: Record changes (keeps a history and keeps the schedule active)
+        run: |
+          python3 -c "import json;d=json.load(open('_site/data.json'));print(len(d['finds']),'finds');[print(n['title']) for n in d['news']]" > snapshot.txt
+          git add snapshot.txt
+          git diff --cached --quiet && exit 0
+          git config user.name "pterodactyl-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -q -m "Fossil/news update $(date -u +%F)"
+          for i in 1 2 3; do git pull --rebase -X theirs -q && git push -q && exit 0; sleep 5; done
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deploy
+        uses: actions/deploy-pages@v4
