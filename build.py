@@ -81,7 +81,7 @@ def reddit():
     out = []
     for i, url in enumerate(REDDIT):
         if i:
-            time.sleep(8)   # Reddit rate-limits unauthenticated RSS hard
+            time.sleep(30)   # Reddit rate-limits unauthenticated RSS hard
         try:
             root = ET.fromstring(get(url))
         except Exception as err:
